@@ -1,4 +1,4 @@
-all: 
+all:
 
-PDP: pdp.c
-	  gcc -Wall  pdp.c -o PDP
+pdp: pdp.c
+	  g++ -Wall  pdp.c -o pdp
