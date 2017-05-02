@@ -1,0 +1,14 @@
+	.=1000
+; add [r0,r1] with [r2,r3]. Store result in [r4,r5]
+; [1, 140001] + [2, 040050] = [4, 00051]	
+	mov #1, r0
+	mov #140001, r1
+	mov #2, r2
+	mov #040050, r3
+	
+	mov r2, r4
+	mov r3, r5
+	add r1, r5
+	adc r4
+	add r0, r4
+	halt

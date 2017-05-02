@@ -1,0 +1,35 @@
+;test dubl2
+; R0 = 1
+; R1 = 1
+; R2 = 2
+; R3 = 0
+; R4 = 1
+; R5 = 177700
+
+.=200
+A: .word -2
+B: .word 3
+C: .word -377
+.=1000
+	mov @#B, R0
+	asr R0         ; R0=1
+	adc R1		   ; R1=1
+	
+	mov #4,R2
+	asr R2
+	adc R2	       ; R2=2
+	
+	mov @#A, R3
+	asr R3
+	asr R3
+	bmi tt
+	mov #7, R5
+
+tt: inc R3			; R3=0
+	adc R4			; R4=1  obяz R5=0
+	; mov @#C, R5	; 177401
+	add @#C, R5		
+	asr R5
+	asr R5
+	;;;;;R5(oct) =-60077
+	halt 				

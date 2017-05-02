@@ -1,0 +1,55 @@
+	.= 100
+	M1: .WORD 0
+ 
+	.= 200
+	M2: .WORD 0
+								; answer r3 : 0 - yes 2, 4, ... - no
+	.= 1000
+	mov #1541, r5
+	mov #M1, r1
+	mov #M2, r2
+	
+delenie:
+	mov #20000, r3 
+	div #10, r5
+	mov r5, (r1)+
+	inc r0
+	mov r4, r5
+	tst r3
+	sub r4, r3
+	bne delenie
+	
+	clr r3
+	mov r0, r3
+	dec r1
+	dec r1
+copy:
+	mov (r1), (r2)
+	dec r1
+	dec r1
+	inc r2
+	inc r2
+	dec r0
+	tst r0
+	bne copy
+	mov r3, r0
+	inc r1
+	inc r1
+	sub r0, r2
+	sub r0, r2
+	
+compare:
+	cmp (r1)+, (r2)+
+	beq loop
+	dec r0
+	tst r0
+	beq exit
+	jmp compare
+loop:
+	dec r3
+	dec r0
+	tst r0
+	bne compare
+	jmp exit
+exit:
+	halt

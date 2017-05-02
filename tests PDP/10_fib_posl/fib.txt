@@ -1,0 +1,35 @@
+. = 1000
+main:   mov     #main,sp   ;
+	mov #1, r0;	1 член последовательности
+	mov #1, r1;	2 член последовательности
+	mov #1, r2;	3 член последовательности
+	mov #2, r5;	какой член считаем, после трех единиц
+	jsr pc, find
+	clr r4
+	halt
+
+find:
+	tst r5
+	beq ab
+	dec r5
+	tst r5
+	beq ab
+loop:
+	jsr pc,  find
+ab:
+	mov r0, r3;	r3 = r0
+	mul r0, r3;	r3 = r0^2
+	mov r3, r0;	r0 = r0^2
+	mov r1, r3;	r3 = r1
+	mul #2, r3;	r3 = 2*r1
+	mul r2, r3;	r3 = 2*r1*r2
+	add r3, r0;	r0 = r0^2 + 2*r1*r2
+	mov r2, r3;	r3 = r2
+	mul r3, r3;	r3 = r2^2
+	add r3, r0;	r0 = r0^2 + 2*r1*r2 + r2^2
+	mov r0, r3;	r3 - н-член последовательности
+	mov r1, r0;
+	mov r2, r1
+	mov r3, r2
+	clr r3
+	rts pc

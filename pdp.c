@@ -13,6 +13,8 @@ byte mem [64*1024] = {};
 #define NO_PARAM 0
 #define HAS_SS 1
 #define HAS_DD 1<<1
+#define HAS_R  1<<2
+#define HAS_NN 1<<3
 
 struct Command
 {
@@ -32,6 +34,8 @@ void mem_dump    (adr start, word n);
 void do_halt     ();
 void do_add      ();
 void do_mov      ();
+void do_sob      ();
+void do_clr      ();
 void do_unknown  ();
 void run_program ();
 
@@ -74,32 +78,26 @@ void load_file (FILE* file)
     byte value            = 0;
 
     while (fscanf (file, "%x %x", &address, &quantity) == 2)
+    {
+        for (cnt = 0; cnt < quantity; cnt ++)
         {
-            for (cnt = 0; cnt < quantity; cnt ++)
-            {
-                fscanf (file, "%hhx", &value);
-                b_write (address + cnt , value);
-            }
+            fscanf (file, "%hhx", &value);
+            b_write (address + cnt , value);
         }
-    //mem_dump (address, quantity);
+    }
 }
 
 void mem_dump (adr start, word n)
 {
-    int cnt = 0;
-
-    for (cnt = 0; cnt < n; cnt += 2)
+    for (int cnt = 0; cnt < n; cnt += 2)
     {
         assert (cnt % 2 == 0);
         printf ("%.6o : %.6o\n",
-                start + cnt, w_read (start + cnt));
+            start + cnt, w_read (start + cnt));
     }
 }
 
-struct SSDD {
-    word val;
-    adr a;
-} ss, dd;
+struct SSDD { word val; adr a; } ss, dd;
 
 void do_halt ()
 {
@@ -109,6 +107,16 @@ void do_halt ()
         printf ("R[%d] = %d\n", i, reg[i]);
     }
     exit (0);
+}
+
+void do_sob ()
+{
+    if (--reg[dd.a] != 0) pc = ss.val;
+}
+
+void do_clr ()
+{
+    reg [dd.a] = 0;
 }
 
 void do_mov ()
@@ -152,10 +160,8 @@ struct SSDD get_mr (word w)
             res.a = reg [n];
             res.val =  w_read (res.a);
             reg [n] += 2;
-            if (n == 7)
-                printf ("#%o ", res.val);
-            else
-                printf ("(R%d)+ ", n);
+            if (n == 7)  printf ("#%o ", res.val);
+            else         printf ("(R%d)+ ", n);
             break;
 
         default: printf ("Unknown node\n"); exit (0);
@@ -168,7 +174,9 @@ struct Command command_list[] = {
     {0xFFFF,  0,          "HALT", do_halt,           NO_PARAM},
     {0170000, 0010000,     "MOV", do_mov,     HAS_SS | HAS_DD},
     {0170000, 0060000,     "ADD", do_add,     HAS_SS | HAS_DD},
-    {0,       0,       "UNKNOWN", do_unknown}
+    {0xFF00,  0077000,     "SOB", do_sob,     HAS_R  | HAS_NN},
+    {0xFF00,  0005000,     "CLR", do_clr,     HAS_DD},
+    {0,       0,       "unknown", do_unknown}
 };
 
 
@@ -189,14 +197,9 @@ void run_program ()
             {
                 printf (" %s ", cmd.name);
 
-                if (cmd.param & HAS_SS)
-                {
-                    ss = get_mr (w >> 6);
-                }
-                if (cmd.param & HAS_DD)
-                {
-                    dd = get_mr (w);
-                }
+                if (cmd.param & HAS_SS) { ss = get_mr (w >> 6); }
+                if (cmd.param & HAS_DD) { dd = get_mr (w); }
+
                 cmd.do_action ();
                 break;
             }

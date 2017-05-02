@@ -1,0 +1,78 @@
+ostat = 177564
+odata = 177566
+
+.=200
+	
+	
+;R5 - само число
+;R0 - адрес печатаемой цифры
+;R4 - кол-во цифр
+;R2 - для asr sob 
+	
+CHIS: .WORD 123456
+N:	  .WORD 5 ; сколько сдвигаем цифр
+K:	  .WORD 12 ; сколько печатается
+STR:  .BLKB 10
+
+STREND: .BLKB 2
+
+.=1000
+main:
+	mov #main, sp
+	mov CHIS, R5
+	mov #STREND, R0
+	movb #12, (R0)
+	movb #15, 1(R0)
+	movb #12, STR
+	movb #15, STR+1
+	mov @#N, R4
+	mov R5, -(sp) ; положили число в стек
+	
+A1:
+	bic #177770, R5
+	add #'0, R5
+	movb R5, -(R0)
+	mov (sp)+, R5
+	mov #3, R2
+
+AA1:
+	asr R5
+	sob R2, AA1
+	
+	mov R5, -(sp)
+	sob R4, A1
+	movb #'0, -(R0)
+	tst (sp)+
+	beq A2
+	incb (R0)
+	
+A2:
+	mov #STR, -(sp)
+	mov @#K, -(sp)
+	jsr pc, puts
+	halt
+	
+puts:
+	mov R0, -(sp)
+	mov R1, -(sp)
+	mov R2, -(sp)
+	mov 12(sp), R1
+	mov 10(sp), R2
+	
+l1:
+	movb (R1)+, R0
+	jsr pc, putchar
+	sob R2, l1
+	
+	mov (sp)+, R2
+	mov (sp)+, R1
+	mov (sp)+, R0
+	inc (sp)
+	inc (sp)
+	rts pc
+
+putchar:
+	tstb @#ostat
+	bpl putchar
+	movb R0, @#odata
+	rts pc
