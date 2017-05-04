@@ -6,7 +6,7 @@ typedef unsigned char      byte;
 typedef unsigned short int word;
 typedef unsigned int        adr;
 
-word reg [8] = {};
+word reg [8]       = {};
 byte mem [64*1024] = {};
 
 #define pc reg [7]
@@ -99,19 +99,22 @@ void mem_dump (adr start, word n)
 
 struct SSDD { word val; adr a; } ss, dd;
 
+word nn;
+word r;
+
 void do_halt ()
 {
     printf ("\n");
     for (int i = 0; i < 8; i++)
     {
-        printf ("R[%d] = %d\n", i, reg[i]);
+        printf ("R[%d] = %o\n", i, reg[i]);
     }
     exit (0);
 }
 
 void do_sob ()
 {
-    if (--reg[dd.a] != 0) pc = ss.val;
+    if (--reg[r] != 0) { pc =  pc - 2 * nn; }
 }
 
 void do_clr ()
@@ -174,8 +177,8 @@ struct Command command_list[] = {
     {0xFFFF,  0,          "HALT", do_halt,           NO_PARAM},
     {0170000, 0010000,     "MOV", do_mov,     HAS_SS | HAS_DD},
     {0170000, 0060000,     "ADD", do_add,     HAS_SS | HAS_DD},
-    {0xFF00,  0077000,     "SOB", do_sob,     HAS_R  | HAS_NN},
-    {0xFF00,  0005000,     "CLR", do_clr,     HAS_DD},
+    {0177000, 0077000,     "SOB", do_sob,     HAS_R  | HAS_NN},
+    {0177700, 0005000,     "CLR", do_clr,              HAS_DD},
     {0,       0,       "unknown", do_unknown}
 };
 
@@ -198,9 +201,15 @@ void run_program ()
                 printf (" %s ", cmd.name);
 
                 if (cmd.param & HAS_SS) { ss = get_mr (w >> 6); }
+
                 if (cmd.param & HAS_DD) { dd = get_mr (w); }
 
+                if (cmd.param & HAS_NN) { nn = w & 077; }
+
+                if (cmd.param & HAS_R)  { r = ( w>>6 ) & 7; }
+
                 cmd.do_action ();
+
                 break;
             }
         }
