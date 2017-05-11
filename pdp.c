@@ -8,7 +8,6 @@ byte b_read (adr a)
     return mem [a];
 }
 
-
 word w_read (adr a)
 {
     word val = 0;
@@ -19,18 +18,15 @@ word w_read (adr a)
     return val;
 }
 
-
 void b_write (adr a, byte val)
 {
     mem [a] = val;
 }
 
-
 void w_write (adr a, word val)
 {
     mem [a]   = val;
     mem [a+1] = (val >> 8);
-}
 
 
 void load_file (FILE* file)
@@ -50,7 +46,6 @@ void load_file (FILE* file)
     }
 }
 
-
 void mem_dump (adr start, word n)
 {
     for (int cnt = 0; cnt < n; cnt += 2)
@@ -60,7 +55,6 @@ void mem_dump (adr start, word n)
             start + cnt, w_read (start + cnt));
     }
 }
-
 
 void do_halt ()
 {
@@ -72,34 +66,50 @@ void do_halt ()
     exit (0);
 }
 
-
 void do_sob ()
 {
-    if (--reg[r] != 0) { pc =  pc - 2 * nn; }
+    if (--reg[r] != 0) pc =  pc - 2 * nn;
 }
-
 
 void do_clr ()
 {
     reg [dd.a] = 0;
+    N = 0;
+    Z = 1;
 }
 
+void do_br ()
+{
+    pc = pc + 2 * xx;
+}
+
+void do_beq ()
+{
+    if (Z == 1)
+    {
+        do_br ();
+    }
+}
 
 void do_mov ()
 {
     reg [dd.a] = ss.val;
-    //w_write (dd.a, ss.val);
+    change_state_flags (reg[dd.a]);
 }
-
 
 void do_add ()
 {
     reg [dd.a] = ss.val + dd.val;
-    //w_write (dd.a, ss.val + dd.val);
+    change_state_flags (reg[dd.a]);
 }
 
-
 void do_unknown () {}
+
+void change_state_flags (word result)
+{
+    (result <  0)? N = 1: N = 0;
+    (result == 0)? Z = 1: Z = 0;
+}
 
 struct SSDD get_mr (word w)
 {
@@ -137,16 +147,15 @@ struct SSDD get_mr (word w)
             res.a   = w_read (reg [n]);
             res.val = w_read (res.a);
             reg [n] += 2;
-            if (n == 7) printf ("#%o ", res.val);
-            else        printf ("(R%d)+ ", n);
+            if (n == 7) printf ("@#%o ", res.val);
+            else        printf ("@(R%d)+ ", n);
             break;
 
-        default: printf ("Unknown node\n"); exit (0);
+        default: printf ("Unknown mode\n"); exit (0);
 
     }
     return res;
 }
-
 
 void run_program ()
 {
@@ -166,15 +175,32 @@ void run_program ()
                 printf (" %s ", cmd.name);
 
                 if (cmd.param & HAS_SS) { ss = get_mr (w >> 6); }
-                if (cmd.param & HAS_DD) { dd = get_mr (w); }
-                if (cmd.param & HAS_NN) { nn = w & 077; }
-                if (cmd.param & HAS_R)  { r = ( w>>6 ) & 7; }
+                if (cmd.param & HAS_DD) { dd = get_mr (w);      }
+                if (cmd.param & HAS_NN) { nn = get_nn (w);      }
+                if (cmd.param & HAS_R)  { r  = get_r  (w);      }
+                if (cmd.param & HAS_XX) { xx = get_xx (w);      }
 
                 cmd.do_action (); break;
             }
         }
         printf ("\n");
     }
+}
+
+word get_r (word w)
+{
+    return (w >> 6) & 7;
+}
+
+word get_nn (word w)
+{
+    return w & 077;
+}
+
+word get_xx (word w)
+{
+    w = w & 0xFF;
+    return (w >> 7 == 1)? (-(0x100 - w)): w;
 }
 
 
