@@ -3,6 +3,19 @@
 #include <stdlib.h>
 #include "pdp.h"
 
+word reg [NUMBER_OF_REGS] = {};
+byte mem [MEM_SIZE]       = {};
+
+#define sp reg [6]
+#define pc reg [7]
+
+int N = 0;
+int Z = 0;
+
+struct SSDD ss, dd;
+
+word nn, r, xx;
+
 byte b_read (adr a)
 {
     return mem [a];
@@ -97,6 +110,7 @@ void do_beq ()
 void do_mov ()
 {
     reg [dd.a] = ss.val;
+    //if (dd.place =
     change_state_flags (reg[dd.a]);
 }
 
@@ -221,7 +235,16 @@ word get_nn (word w)
 word get_xx (word w)
 {
     w = w & 0xFF;
-    return (w >> 7 == 1)? (-(0x100 - w)): w;
+
+    if (w >> 7 == 1)
+    {
+        return -(0x100 - w);
+    }
+
+    else
+    {
+        return  w;
+    }
 }
 
 int main (int argc, char *argv[])
