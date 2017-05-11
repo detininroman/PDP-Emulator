@@ -27,7 +27,7 @@ void w_write (adr a, word val)
 {
     mem [a]   = val;
     mem [a+1] = (val >> 8);
-
+}
 
 void load_file (FILE* file)
 {
@@ -68,7 +68,10 @@ void do_halt ()
 
 void do_sob ()
 {
-    if (--reg[r] != 0) pc =  pc - 2 * nn;
+    if (--reg[r] != 0)
+    {
+        pc = pc - 2 * nn;
+    }
 }
 
 void do_clr ()
@@ -135,8 +138,8 @@ struct SSDD get_mr (word w)
 
         case 2: //(R1)+
 
-            res.a   = reg [n];
-            res.val = w_read (res.a);
+            res.a    = reg [n];
+            res.val  = w_read (res.a);
             reg [n] += 2;
             if (n == 7) printf ("#%o ", res.val);
             else        printf ("(R%d)+ ", n);
@@ -149,6 +152,24 @@ struct SSDD get_mr (word w)
             reg [n] += 2;
             if (n == 7) printf ("@#%o ", res.val);
             else        printf ("@(R%d)+ ", n);
+            break;
+
+        case 4: //-(R2)
+
+            reg [n] += 2;
+            res.a    = reg [n];
+            res.val  = w_read (res.a);
+            if (n == 7) printf ("#%o ", res.val);
+            else        printf ("-(R%d) ", n);
+            break;
+
+        case 5: //@-(R2)
+
+            reg [n] += 2;
+            res.a   = w_read (reg [n]);
+            res.val = w_read (res.a);
+            if (n == 7) printf ("@#%o ", res.val);
+            else        printf ("@-(R%d) ", n);
             break;
 
         default: printf ("Unknown mode\n"); exit (0);
@@ -202,7 +223,6 @@ word get_xx (word w)
     w = w & 0xFF;
     return (w >> 7 == 1)? (-(0x100 - w)): w;
 }
-
 
 int main (int argc, char *argv[])
 {

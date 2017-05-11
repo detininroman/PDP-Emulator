@@ -7,6 +7,7 @@ byte mem [64*1024] = {};
 
 #define sp reg [6]
 #define pc reg [7]
+
 #define NO_PARAM 0
 #define HAS_SS 1
 #define HAS_DD 1<<1
@@ -14,8 +15,8 @@ byte mem [64*1024] = {};
 #define HAS_NN 1<<3
 #define HAS_XX 1<<4
 
-int N = 0;
-int Z = 0;
+int N = 0; //flag
+int Z = 0; //flag
 
 struct Command
 {
