@@ -62,16 +62,25 @@ void load_file (FILE* file)
 
 void dump ()
 {
-    printf ("\n\t\t\t\t\t");
+#ifdef DEBUG_MODE
+    printf ("\n\t\t\t\t");
     for (int i = 0; i < 8; i++)
     {
         printf ("R[%d] = %o  ", i, reg[i]);
     }
+#else
+    printf ("\n");
+    for (int i = 0; i < 8; i++)
+    {
+        printf ("R[%d] = %o\n", i, reg[i]);
+    }
+#endif
 }
 
 void do_halt ()
 {
     dump ();
+    printf ("\n");
     exit (0);
 }
 
@@ -81,7 +90,9 @@ void do_sob ()
     {
         pc = pc - 2 * nn;
     }
+#ifdef DEBUG_MODE
     dump ();
+#endif
 }
 
 void do_clr ()
@@ -89,7 +100,9 @@ void do_clr ()
     reg [dd.a] = 0;
     N = 0;
     Z = 1;
+#ifdef DEBUG_MODE
     dump ();
+#endif
 }
 
 void do_br ()
@@ -109,28 +122,26 @@ void do_mov ()
 {
     reg [dd.a] = ss.val;
     change_state_flags (reg[dd.a]);
+#ifdef DEBUG_MODE
     dump ();
-}
-
-void do_movb ()
-{
-    b_write (dd.a, ss.val);
-    dump ();
+#endif
 }
 
 void do_add ()
 {
     reg [dd.a] = ss.val + dd.val;
     change_state_flags (reg[dd.a]);
+#ifdef DEBUG_MODE
     dump ();
+#endif
 }
 
 void do_unknown () {}
 
 void change_state_flags (word result)
 {
-    (result <  0)? N = 1: N = 0; // improve
-    (result == 0)? Z = 1: Z = 0;
+    N = (result <  0)? 1: 0; // improve
+    Z = (result == 0)? 1: 0;
 }
 
 struct SSDD get_mr (word w)
@@ -138,8 +149,8 @@ struct SSDD get_mr (word w)
     struct SSDD res;
     int n = w & 7;
     int mode = (w >> 3) & 7;
-    word b = get_b (w >> 15);
-
+    //word b = get_b (w >> 15);
+    int b = (w >> 15) & 0x1;
     switch (mode)
     {
         case 0: //R1
@@ -152,7 +163,14 @@ struct SSDD get_mr (word w)
         case 1: //(R1)
         {
             res.a = reg [n];
-            res.val = (b == 1)? b_read (res.a): w_read (res.a);
+            if (b == 1)
+            {
+                res.val = b_read (res.a);
+            }
+            else
+            {
+                res.val = w_read (res.a);
+            }
             printf ("(R%d) ", n);
             break;
         }
@@ -162,19 +180,28 @@ struct SSDD get_mr (word w)
             if (b == 1)
             {
                 res.val = b_read (res.a);
-                if (res.val >> 7 == 1)
+                if ((res.val >> 7) == 1)
                 {
                     res.val = res.val | 0xFF00;
                 }
-                reg [n] += (n == 6 || n == 7)? 2: 1;
+
+                if (n == 6 || n == 7) { reg [n] += 2; }
+                else { reg [n] += 1; }
             }
             else
             {
                 res.val = w_read (res.a);
                 reg [n] += 2;
             }
-            (n == 7)? printf ("#%o ", res.val):
-                    printf ("(R%d)+ ", n);
+
+            if (n == 7)
+            {
+                printf ("#%o ", res.val);
+            }
+            else
+            {
+                printf ("(R%d)+ ", n);
+            }
             break;
         }
         case 3: //@(R2)+
@@ -183,8 +210,14 @@ struct SSDD get_mr (word w)
             res.val = w_read (res.a);
             reg [n] += 2;
 
-            (n == 7)? printf ("@#%o ", res.val):
-                    printf ("@(R%d)+ ", n);
+            if (n == 7)
+            {
+                printf ("@#%o ", res.val);
+            }
+            else
+            {
+                printf ("@(R%d)+ ", n);
+            }
             break;
         }
         case 4: //-(R2)
@@ -197,7 +230,8 @@ struct SSDD get_mr (word w)
                 {
                     res.val = res.val | 0xFF00;
                 }
-                reg [n] -= (n == 6 || n == 7)? 2: 1;
+                if (n == 6 || n == 7) { reg [n] -=  2; }
+                else { reg [n] -= 1; }
             }
             else
             {

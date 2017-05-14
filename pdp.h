@@ -1,9 +1,11 @@
 #ifndef PDP_H
 #define PDP_H
 
+//#define DEBUG_MODE
+
 typedef unsigned char  byte;
-typedef unsigned short word;
-typedef unsigned int    adr;
+typedef short word;
+typedef int    adr;
 
 enum
 {
@@ -51,7 +53,6 @@ void dump               ();
 void do_halt            ();
 void do_add             ();
 void do_mov             ();
-void do_movb            ();
 void do_sob             ();
 void do_clr             ();
 void do_beq             ();
@@ -62,7 +63,7 @@ void run_program        ();
 struct Command command_list[] = {
     {0xFFFF, 0,       "HALT", do_halt,                NO_PARAM},
     {0xF000, 0010000,  "MOV", do_mov,  HAS_SS | HAS_DD | HAS_B},
-    {0xF000, 0110000, "MOVB", do_movb, HAS_SS | HAS_DD | HAS_B},
+    {0xF000, 0110000, "MOVB", do_mov,  HAS_SS | HAS_DD | HAS_B},
     {0xF000, 0060000,  "ADD", do_add,          HAS_SS | HAS_DD},
     {0xFE00, 0077000,  "SOB", do_sob,          HAS_R  | HAS_NN},
     {0xFFC0, 0005000,  "CLR", do_clr,                   HAS_DD},
