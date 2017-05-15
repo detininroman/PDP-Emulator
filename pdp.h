@@ -3,9 +3,9 @@
 
 //#define DEBUG_MODE
 
-typedef unsigned char  byte;
-typedef short word;
-typedef int    adr;
+typedef unsigned char byte;
+typedef short         word;
+typedef int            adr;
 
 enum
 {
@@ -48,7 +48,7 @@ void change_state_flags (word result);
 word get_b              (word w);
 word get_r              (word w);
 word get_nn             (word w);
-int  get_xx             (word w);
+word get_xx             (word w);
 void dump               ();
 void do_halt            ();
 void do_add             ();
@@ -62,8 +62,8 @@ void run_program        ();
 
 struct Command command_list[] = {
     {0xFFFF, 0,       "HALT", do_halt,                NO_PARAM},
-    {0xF000, 0010000,  "MOV", do_mov,  HAS_SS | HAS_DD | HAS_B},
-    {0xF000, 0110000, "MOVB", do_mov,  HAS_SS | HAS_DD | HAS_B},
+    {0xF000, 0010000,  "MOV", do_mov,  HAS_B | HAS_SS | HAS_DD},
+    {0xF000, 0110000, "MOVB", do_mov,  HAS_B | HAS_DD | HAS_SS},
     {0xF000, 0060000,  "ADD", do_add,          HAS_SS | HAS_DD},
     {0xFE00, 0077000,  "SOB", do_sob,          HAS_R  | HAS_NN},
     {0xFFC0, 0005000,  "CLR", do_clr,                   HAS_DD},

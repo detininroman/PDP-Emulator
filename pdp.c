@@ -15,7 +15,7 @@ int Z = 0;
 struct SSDD ss, dd;
 word nn = 0;
 word r  = 0;
-int  xx = 0;
+word xx = 0;
 
 byte b_read (adr a)
 {
@@ -28,7 +28,6 @@ word w_read (adr a)
     val = val | mem[a+1];
     val = val << 8;
     val = val | mem[a];
-
     return val;
 }
 
@@ -108,6 +107,9 @@ void do_clr ()
 void do_br ()
 {
     pc = pc + 2 * xx;
+#ifdef DEBUG_MODE
+    dump ();
+#endif
 }
 
 void do_beq ()
@@ -116,6 +118,9 @@ void do_beq ()
     {
         do_br ();
     }
+#ifdef DEBUG_MODE
+    dump ();
+#endif
 }
 
 void do_mov ()
@@ -136,11 +141,15 @@ void do_add ()
 #endif
 }
 
-void do_unknown () {}
+void do_unknown ()
+{
+    printf ("Unknown command!\n");
+    assert (0);
+}
 
 void change_state_flags (word result)
 {
-    N = (result <  0)? 1: 0; // improve
+    N = (result <  0)? 1: 0;
     Z = (result == 0)? 1: 0;
 }
 
@@ -149,8 +158,7 @@ struct SSDD get_mr (word w)
     struct SSDD res;
     int n = w & 7;
     int mode = (w >> 3) & 7;
-    //word b = get_b (w >> 15);
-    int b = (w >> 15) & 0x1;
+    word b = get_b (w >> 15);
     switch (mode)
     {
         case 0: //R1
@@ -184,9 +192,7 @@ struct SSDD get_mr (word w)
                 {
                     res.val = res.val | 0xFF00;
                 }
-
-                if (n == 6 || n == 7) { reg [n] += 2; }
-                else { reg [n] += 1; }
+                reg [n] += (n == 6 || n == 7)? 2: 1;
             }
             else
             {
@@ -230,15 +236,14 @@ struct SSDD get_mr (word w)
                 {
                     res.val = res.val | 0xFF00;
                 }
-                if (n == 6 || n == 7) { reg [n] -=  2; }
-                else { reg [n] -= 1; }
+                reg [n] -= (n == 6 || n == 7)? 2: 1;
             }
             else
             {
                 res.val = w_read (res.a);
                 reg [n] -= 2;
             }
-            printf ("-(R%d)+ ", n);
+            printf ("-(R%d) ", n);
             break;
         }
         case 5: //@-(R2)
@@ -246,9 +251,9 @@ struct SSDD get_mr (word w)
             reg [n] -= 2;
             res.a   = w_read (reg[n]);
             res.val = w_read (res.a);
-            printf ("@-(R%d ", n);
+            printf ("@-(R%d) ", n);
         }
-        default: printf ("Unknown mode\n"); assert (0);
+        default: printf ("Unknown mode\n"); exit (3);
     }
     return res;
 }
@@ -287,7 +292,7 @@ word get_r  (word w) { return (w >> 6) & 7; }
 word get_b  (word w) { return w & 1;        }
 word get_nn (word w) { return w & 0x3F;     }
 
-int  get_xx (word w)
+word  get_xx (word w)
 {
     w = w & 0xFF;
     int ret_val = (w >> 7 == 1)? (w-0x100): w;

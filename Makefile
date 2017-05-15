@@ -1,4 +1,4 @@
 all:
 
-PDP: pdp.c pdp.h
-	  gcc -Wall -Wno-write-strings pdp.c -o pdp
+pdp: pdp.c pdp.h
+	  g++ -Wall -Wnoarrowing -Wno-write-strings pdp.c -o pdp
